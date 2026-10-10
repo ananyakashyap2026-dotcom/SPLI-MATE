@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SettleMate - Split fairly. Settle simply.</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Include QRCode.js library for generating QR codes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <div class="logo-badge">
+          <span class="logo-icon">💸</span>
+          <span class="logo-text">SettleMate</span>
+        </div>
+        <select id="currency-select" class="select-compact">
+          <option value="₹" selected>₹ INR</option>
+          <option value="$">$ USD</option>
+          <option value="€">€ EUR</option>
+          <option value="£">£ GBP</option>
+        </select>
+      </div>
+      <h1>SettleMate</h1>
+      <p class="subtitle">Split fairly. Settle simply. 💸</p>
+    </header>
+
+    <div id="error-box" class="error-box"></div>
+
+    <!-- Step 1: Scan, Situation & History View -->
+    <div class="wizard-step" data-step="1">
+      <section class="section-card scan-top-card">
+        <div class="scan-box">
+          <label for="bill-scan-input" class="scan-label">📷 Scan / Upload Receipt Image</label>
+          <input type="file" id="bill-scan-input" accept="image/*" class="hidden" />
+          <p class="scan-subtext">Click to upload receipt photo and automatically record expense details</p>
+        </div>
+        <div id="scanned-bill-preview" class="scanned-bill-preview hidden">
+          <div class="preview-header">
+            <span>📄 Uploaded Receipt Preview</span>
+            <button type="button" id="remove-scanned-bill-btn" class="btn-remove" title="Remove Receipt">&times;</button>
+          </div>
+          <img id="scanned-bill-img" src="" alt="Uploaded Scanned Receipt" />
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-title">
+          <span><span class="step-num">1</span> Expense Situation & Presets</span>
+        </div>
+        <div class="select-wrapper mb-2">
+          <select id="expense-situation-select">
+            <option value="restaurant" selected>🍔 Restaurant / Dining (5% GST, 10% Service)</option>
+            <option value="trip">✈️ Trip / Vacation (18% Tax, 0% Service)</option>
+            <option value="shopping">🛍️ Shopping / Retail (12% GST, 5% Discount)</option>
+            <option value="roommates">🏠 Roommates / Rent (0% Tax, 0% Service)</option>
+            <option value="custom">✍️ Custom Scenario...</option>
+          </select>
+        </div>
+        <input type="text" id="custom-scenario-input" class="input-field hidden mb-2" placeholder="Enter custom scenario name (e.g. Goa Trip)" />
+        <div class="input-group">
+          <input type="text" id="place-visited-input" class="input-field" placeholder="📍 Place / Location Visited (e.g. Cafe Brittos, Baga Beach)" />
+        </div>
+      </section>
+
+      <section class="section-card" id="history-section-step1">
+        <div class="section-title">
+          <span>📜 Settlement History & Saved Bills</span>
+          <button type="button" id="clear-history-btn" class="btn-text-danger">❌ Clear History</button>
+        </div>
+        <div id="history-list" class="history-list"></div>
+      </section>
+
+      <div class="wizard-nav-buttons">
+        <button type="button" class="btn btn-money btn-block btn-next-step">Next: Participants &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Participants & Groups -->
+    <div class="wizard-step hidden" data-step="2">
+      <section class="section-card">
+        <div class="section-title">
+          <span><span class="step-num">2</span> Participants & Groups</span>
+          <span class="badge" id="participant-count">0 Added</span>
+        </div>
+        
+        <div class="group-row mb-2">
+          <select id="group-select" class="select-field">
+            <option value="">-- Select Saved Group --</option>
+          </select>
+          <button type="button" id="load-group-btn" class="btn btn-purple">Load</button>
+          <button type="button" id="delete-group-btn" class="btn btn-danger">❌ Delete</button>
+        </div>
+
+        <div class="input-group mb-2">
+          <select id="avatar-picker" class="select-compact">
+            <option value="auto" selected>🎲 Random Avatar</option>
+            <option value="👤">👤</option>
+            <option value="👨">👨</option>
+            <option value="👩">👩</option>
+            <option value="🧑">🧑</option>
+            <option value="👦">👦</option>
+            <option value="👧">👧</option>
+            <option value="🧔">🧔</option>
+            <option value="👴">👴</option>
+            <option value="👵">👵</option>
+          </select>
+          <input type="text" id="participant-name-input" class="input-field" placeholder="Enter participant name" />
+          <button type="button" class="btn btn-money" id="add-participant-btn">✅ + Add</button>
+        </div>
+
+        <ul id="participant-list" class="participant-list mb-2"></ul>
+
+        <div class="input-group">
+          <input type="text" id="group-name-input" class="input-field" placeholder="Name group to save current list..." />
+          <button type="button" id="save-group-btn" class="btn btn-secondary">💾 Save Group</button>
+        </div>
+      </section>
+
+      <div class="wizard-nav-buttons grid-2">
+        <button type="button" class="btn btn-secondary btn-block btn-prev-step">&larr; Back</button>
+        <button type="button" class="btn btn-money btn-block btn-next-step">Next: Split Type & Bill Breakdown &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Combined Split Type & Main Bill Breakdown -->
+    <div class="wizard-step hidden" data-step="3">
+      <section class="section-card current-bill-card">
+        <div class="section-title">
+          <span>💸 Expense Scenario Overview</span>
+          <span class="badge badge-pending" id="top-settlement-status">Pending ❌</span>
+        </div>
+        <div class="bill-quick-metrics">
+          <div class="quick-metric">
+            <span class="q-label">Grand Total</span>
+            <span class="q-value text-positive">💸 <span class="dyn-curr">₹</span><span id="top-grand-total">0.00</span></span>
+          </div>
+          <div class="quick-metric">
+            <span class="q-label">Bills Stacked</span>
+            <span class="q-value" id="top-bills-count">0</span>
+          </div>
+          <div class="quick-metric">
+            <span class="q-label">Paid Status</span>
+            <span class="q-value" id="top-paid-progress">0/0 Paid</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-title">
+          <span><span class="step-num">3</span> Choose Split Method & Breakdown</span>
+        </div>
+        
+        <div class="mb-2">
+          <label class="section-sublabel mb-1">Select How to Split This Bill:</label>
+          <select id="split-method-select" class="select-field">
+            <option value="equal" selected>⚖️ Equal Split (Split Total Bill Equally)</option>
+            <option value="exact">💵 Custom Amounts (Manual Shares)</option>
+            <option value="percentage">📊 Percentage (%) Split</option>
+            <option value="items">🍕 Itemized Split (Split by Item Consumed)</option>
+          </select>
+        </div>
+
+        <div id="manual-base-container" class="input-wrapper mb-2">
+          <span class="currency-symbol dyn-curr">₹</span>
+          <input type="number" id="base-bill-input" class="input-field" placeholder="Base Bill Amount" min="0" step="0.01" />
+        </div>
+
+        <div id="itemized-split-container" class="hidden mb-2">
+          <div class="item-builder-card mb-2">
+            <div class="grid-3 mb-2">
+              <input type="text" id="item-name-input" class="input-field" placeholder="Item Name (e.g. Pizza)" />
+              <div class="input-wrapper">
+                <span class="currency-symbol dyn-curr">₹</span>
+                <input type="number" id="item-price-input" class="input-field" placeholder="Unit Price" min="0" step="0.01" />
+              </div>
+              <div class="input-wrapper">
+                <input type="number" id="item-qty-input" class="input-field" placeholder="Total Units" value="0" min="1" step="1" />
+              </div>
+            </div>
+
+            <label class="section-sublabel mb-1">Quantity/Units Consumed per Person:</label>
+            <div id="item-portion-inputs" class="portion-grid mb-2"></div>
+
+            <button type="button" id="add-item-btn" class="btn btn-purple btn-block">✅ + Add Item to Bill</button>
+          </div>
+
+          <div class="flex-between mb-2">
+            <span class="section-sublabel">Added Items:</span>
+            <button type="button" id="sync-base-from-items-btn" class="btn-text-purple">⚡ Sync Base Bill from Items</button>
+          </div>
+          
+          <ul id="items-list" class="items-list mb-2"></ul>
+        </div>
+
+        <div id="custom-split-container" class="hidden mb-2">
+          <div id="custom-shares-list"></div>
+        </div>
+
+        <div class="grid-3 mb-2">
+          <div class="input-wrapper">
+            <span class="currency-symbol">%</span>
+            <input type="number" id="tax-input" class="input-field" placeholder="GST %" min="0" max="100" step="0.1" value="5" />
+          </div>
+          <div class="input-wrapper">
+            <span class="currency-symbol">%</span>
+            <input type="number" id="service-charge-input" class="input-field" placeholder="Service %" min="0" max="100" step="0.1" value="10" />
+          </div>
+          <div class="input-wrapper">
+            <span class="currency-symbol">%</span>
+            <input type="number" id="discount-input" class="input-field" placeholder="Discount %" min="0" max="100" step="0.1" value="0" />
+          </div>
+        </div>
+
+        <div class="grid-2 mb-2">
+          <div class="input-wrapper">
+            <span class="currency-symbol dyn-curr">₹</span>
+            <input type="number" id="tip-input" class="input-field" placeholder="Tip 0.00" min="0" step="0.01" />
+          </div>
+          <select id="tip-mode-select" class="select-field">
+            <option value="equal" selected>🤝 Split Tip Equally</option>
+            <option value="individual">👤 Individual Tip</option>
+            <option value="none">🚫 Payer Covers Tip</option>
+          </select>
+        </div>
+
+        <div class="rounding-toggle-row mb-2">
+          <label for="rounding-toggle" class="section-sublabel">🪙 Automatic Rounding (Nearest Integer):</label>
+          <input type="checkbox" id="rounding-toggle" style="width:18px; height:18px; cursor:pointer;" />
+        </div>
+
+        <div id="individual-tips-container" class="hidden mb-2">
+          <label class="section-sublabel mb-1">Enter Tip Amount Per Candidate:</label>
+          <div id="individual-tips-list"></div>
+        </div>
+
+        <div class="bill-summary-breakdown mb-2">
+          <div class="bs-row"><span>Base Amount:</span><span>💸 <span class="dyn-curr">₹</span><span id="bs-base">0.00</span></span></div>
+          <div class="bs-row"><span>+ GST (<span id="bs-tax-pct">5</span>%):</span><span>💸 <span class="dyn-curr">₹</span><span id="bs-tax">0.00</span></span></div>
+          <div class="bs-row"><span>+ Service Charge (<span id="bs-service-pct">10</span>%):</span><span>💸 <span class="dyn-curr">₹</span><span id="bs-service">0.00</span></span></div>
+          <div class="bs-row text-negative"><span>- Discount (<span id="bs-discount-pct">0</span>%):</span><span>💸 <span class="dyn-curr">₹</span><span id="bs-discount">0.00</span></span></div>
+          <div class="bs-row"><span>+ Tip:</span><span>💸 <span class="dyn-curr">₹</span><span id="bs-tip">0.00</span></span></div>
+        </div>
+
+        <div class="status-summary valid mb-2">
+          Active Bill Total: 💸 <span class="dyn-curr">₹</span><span id="grand-total-val">0.00</span>
+        </div>
+
+        <!-- Stacking Option & Payer Toggle -->
+        <div class="stack-option-card mb-2">
+          <div class="rounding-toggle-row mb-2">
+            <label for="enable-stack-toggle" class="section-sublabel">📚 Do you want to stack this bill to the scenario?</label>
+            <input type="checkbox" id="enable-stack-toggle" style="width:18px; height:18px; cursor:pointer;" />
+          </div>
+
+          <div id="stack-payer-container" class="hidden">
+            <label class="section-sublabel mb-1">Who paid this bill? (Required):</label>
+            <select id="stacked-bill-payer-select" class="select-field mb-2">
+              <option value="Not Specified">-- Select Who Paid This Bill --</option>
+            </select>
+            <button type="button" id="add-bill-to-scenario-btn" class="btn btn-purple btn-block">💸 ➕ Confirm & Add Bill to Stack</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card" id="stacked-bills-section">
+        <div class="section-title">
+          <span>📚 Stacked Bills in Current Scenario</span>
+          <span class="badge" id="stacked-bills-count">0 Bills</span>
+        </div>
+        <ul id="stacked-bills-list" class="items-list"></ul>
+      </section>
+
+      <section class="section-card" id="bill-validation-section">
+        <div class="section-title">
+          <span>⚖️ Live Bill Validation</span>
+          <span class="badge" id="validation-badge">✅ Verified</span>
+        </div>
+        <div class="validation-grid">
+          <div class="metric-box">
+            <span class="metric-label">Total Scenario Bill</span>
+            <span class="metric-val">💸 <span class="dyn-curr">₹</span><span id="val-total-bill">0.00</span></span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Assigned to People</span>
+            <span class="metric-val text-purple">💸 <span class="dyn-curr">₹</span><span id="val-assigned">0.00</span></span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Difference / Unassigned</span>
+            <span class="metric-val" id="val-diff-container">💸 <span class="dyn-curr">₹</span><span id="val-diff">0.00</span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card" id="who-consumed-what-section">
+        <div class="section-title">
+          <span>🍕 Who Consumed What</span>
+        </div>
+        <div id="who-consumed-what-container" class="consumed-matrix">
+          <p style="color: #9ca3af; font-size: 0.88rem;">Add itemized items and participants to render consumption matrix.</p>
+        </div>
+      </section>
+
+      <div class="wizard-nav-buttons grid-2">
+        <button type="button" class="btn btn-secondary btn-block btn-prev-step">&larr; Back</button>
+        <button type="button" class="btn btn-money btn-block btn-next-step">Next: Payments &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Payments & Settlement Calculation -->
+    <div class="wizard-step hidden" data-step="4">
+      <section class="section-card">
+        <div class="section-title">
+          <span><span class="step-num">4</span> Payments Made (Who Paid & How Much)</span>
+        </div>
+        <p class="section-sublabel mb-2">Enter how much each participant actually paid toward the total bill:</p>
+        <div id="payments-list" class="mb-2"></div>
+      </section>
+
+      <section class="section-card" id="group-balance-section">
+        <div class="section-title">
+          <span>🏛️ Group Balance View</span>
+        </div>
+        <div class="bill-summary-breakdown mb-2">
+          <div class="bs-row"><span>Total Group Spent:</span><span>💸 <span class="dyn-curr">₹</span><span id="gb-total-spent">0.00</span></span></div>
+          <div class="bs-row"><span>Total Payments Collected:</span><span>💸 <span class="dyn-curr">₹</span><span id="gb-total-collected">0.00</span></span></div>
+          <div class="bs-row"><span>Net Outstanding Debt:</span><span>💸 <span class="dyn-curr">₹</span><span id="gb-net-debt">0.00</span></span></div>
+        </div>
+        <div id="group-balance-list"></div>
+      </section>
+
+      <div class="action-buttons mb-3">
+        <button type="button" class="btn btn-gradient btn-block" id="calculate-btn">💸 ⚡ Calculate Settlement & Dashboards</button>
+      </div>
+
+      <!-- Payment Status Tracker: Hidden until calculate button is clicked -->
+      <section class="section-card hidden" id="individual-payment-tracker-section">
+        <div class="section-title">
+          <span>💳 Individual Payment Status Tracking</span>
+        </div>
+        <p class="section-sublabel mb-2">Status toggles are available only for participants who owe money:</p>
+        <div id="individual-payment-tracker" class="mb-2"></div>
+      </section>
+
+      <section class="section-card hidden" id="results-section">
+        <div class="section-title text-purple">
+          <span>📊 Settlement Plan</span>
+          <span id="settlement-status-badge" class="badge badge-pending">⏳ Pending ❌</span>
+        </div>
+        <div id="transaction-summary-box" class="bill-summary-breakdown mb-2"></div>
+        <ul id="settlement-plan-list" class="settlement-list mb-2"></ul>
+
+        <div class="grid-3 mb-2">
+          <button type="button" class="btn btn-success" id="share-whatsapp-btn">📲 WhatsApp</button>
+          <button type="button" class="btn btn-purple" id="share-native-btn">📤 Share / Copy</button>
+          <button type="button" class="btn btn-qr" id="open-qr-btn">📱 QR Code</button>
+        </div>
+
+        <button type="button" class="btn btn-success btn-block" id="toggle-settled-btn">✅ Mark Entire Bill as Settled</button>
+      </section>
+
+      <section class="section-card" id="dashboards-section">
+        <div class="section-title">
+          <span>📊 Individual Share & Member Dashboards</span>
+        </div>
+        <p class="section-sublabel mb-2">Detailed breakdown including current share, payment method, active pending status, and historical unsettled debt:</p>
+        <div id="dashboards-grid" class="dashboards-grid">
+          <p style="color: #9ca3af; font-size: 0.88rem;">Add participants and calculate settlement to generate individual dashboards.</p>
+        </div>
+      </section>
+
+      <div class="action-buttons mb-3">
+        <button type="button" class="btn btn-secondary btn-block" id="save-history-btn">💾 Save to History & Reset Bill</button>
+      </div>
+
+      <div class="wizard-nav-buttons">
+        <button type="button" class="btn btn-secondary btn-block btn-prev-step">&larr; Back</button>
+      </div>
+    </div>
+
+    <!-- QR Code Modal Popup -->
+    <div id="qr-modal" class="settled-screen hidden">
+      <div class="settled-card qr-card">
+        <div class="celebration-badge">📱</div>
+        <h2>Scan QR Code to Pay</h2>
+        <div class="qr-inputs mb-2">
+          <input type="text" id="qr-vpa-input" class="input-field mb-1" placeholder="Enter Receiver UPI ID (e.g. name@upi)" />
+          <input type="text" id="qr-name-input" class="input-field mb-1" placeholder="Enter Receiver Name" />
+          <input type="number" id="qr-amount-input" class="input-field" placeholder="Amount" step="0.01" />
+        </div>
+        <div id="qr-code-box" class="qr-code-box mb-2"></div>
+        <button type="button" class="btn btn-secondary btn-block" id="close-qr-btn">❌ Close</button>
+      </div>
+    </div>
+
+    <!-- Celebration Screen Overlay -->
+    <div id="settled-celebration-screen" class="settled-screen hidden">
+      <div class="settled-card">
+        <div class="celebration-badge">🎉 ✅</div>
+        <h2>Bill Fully Settled!</h2>
+        <p>All participants have completed their payments. Outstanding debts are clear.</p>
+        <button type="button" class="btn btn-money" id="dismiss-celebration-btn">Back to Overview</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
