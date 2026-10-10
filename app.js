@@ -1275,7 +1275,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     recalculateSharesInternal();
     
-    // FIX 2: Reveal the individual payment tracker section ONLY after calculation button is clicked
     individualPaymentTrackerSection.classList.remove('hidden');
     resultsSection.classList.remove('hidden');
     
@@ -1295,8 +1294,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof QRCode !== 'undefined') {
       new QRCode(qrCodeBox, {
         text: upiUri,
-        width: 180,
-        height: 180,
+        width: 150,
+        height: 150,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
@@ -1475,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'history-card';
       const statusClass = h.status === 'Settled' ? 'badge-settled' : 'badge-pending';
       const txRows = (h.transactions || []).map(t => 
-        `<div style="font-size:0.85rem; color:#a7f3d0;">💸 ${escapeHtml(t.from)} ➔ ${escapeHtml(t.to)}: ${h.currency}${t.amount.toFixed(2)}</div>`
+        `<div style="font-size:0.82rem; color:#a7f3d0;">💸 ${escapeHtml(t.from)} ➔ ${escapeHtml(t.to)}: ${h.currency}${t.amount.toFixed(2)}</div>`
       ).join('');
 
       const memberNames = (h.participantsGroup || []).map(p => `${p.avatar || getRandomHumanAvatar(p.name || p)} ${p.name || p}`).join(', ');
@@ -1486,9 +1485,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="badge ${statusClass}">${h.status === 'Settled' ? '✅ ' : '❌ '}${h.status}</span>
         </div>
         <div class="history-date">📅 ${h.dateTime} - Total: 💸 ${h.currency}${h.total.toFixed(2)}</div>
-        <div style="font-size:0.8rem; color:#9ca3af; margin-top:4px;">👥 Members: ${escapeHtml(memberNames || 'None')}</div>
-        <div style="margin-top:6px;">${txRows || '<span style="font-size:0.85rem; color:#34d399;">Fully Settled ✅</span>'}</div>
-        <button type="button" class="btn btn-purple btn-reload-hist-group" data-hist-idx="${idx}" style="margin-top:8px; font-size:0.78rem; padding:4px 10px;">
+        <div style="font-size:0.78rem; color:#9ca3af; margin-top:2px;">👥 Members: ${escapeHtml(memberNames || 'None')}</div>
+        <div style="margin-top:4px; width:100%;">${txRows || '<span style="font-size:0.82rem; color:#34d399;">Fully Settled ✅</span>'}</div>
+        <button type="button" class="btn btn-purple btn-reload-hist-group" data-hist-idx="${idx}" style="margin-top:6px; font-size:0.75rem; padding:4px 10px; width:100%;">
           🔄 Re-load This Group
         </button>
       `;
@@ -1611,7 +1610,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'member-dashboard-card';
       card.innerHTML = `
         <div class="dashboard-header">
-          <span style="font-weight:700; font-size:1.05rem;">${p.avatar} ${escapeHtml(p.name)}</span>
+          <span style="font-weight:700; font-size:0.98rem;">${p.avatar} ${escapeHtml(p.name)}</span>
           <span class="badge ${isPaid || netPending <= 0 ? 'badge-settled' : 'badge-pending'}">
             ${netPending <= 0 ? '📥 Clear ✅' : (isPaid ? '✅ Paid' : '❌ Pending')}
           </span>
@@ -1636,7 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div class="metric-box">
-            <span class="metric-label">Previous Debt (Unsettled)</span>
+            <span class="metric-label">Previous Debt</span>
             <span class="metric-val ${pastUnsettledDebt > 0 ? 'text-negative' : 'text-positive'}">
               💸 ${state.currency}${pastUnsettledDebt.toFixed(2)}
             </span>
